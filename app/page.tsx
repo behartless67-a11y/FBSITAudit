@@ -1,65 +1,149 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { AuditForm } from "@/components/AuditForm";
+import { UserInfo } from "@/types/audit";
 
 export default function Home() {
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check if we're in dev mode (local development)
+    const isDev = process.env.NODE_ENV === 'development';
+
+    if (isDev) {
+      // Mock user data for local development
+      const mockUser = {
+        clientPrincipal: {
+          identityProvider: 'aad',
+          userId: 'dev-user-123',
+          userDetails: 'dev.user@virginia.edu',
+          userRoles: ['authenticated'],
+          claims: [
+            { typ: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname', val: 'Dev' },
+            { typ: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname', val: 'User' }
+          ]
+        }
+      };
+      setUserInfo(mockUser);
+      setLoading(false);
+      return;
+    }
+
+    // Fetch user info from Azure Easy Auth (production only)
+    fetch('/.auth/me')
+      .then(res => res.json())
+      .then(data => {
+        setUserInfo(data);
+
+        if (!data.clientPrincipal) {
+          // Not authenticated - redirect to login
+          window.location.href = '/.auth/login/aad';
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error fetching user info:', err);
+        setLoading(false);
+      });
+  }, []);
+
+  const getUserName = () => {
+    if (!userInfo?.clientPrincipal) return 'User';
+
+    const claims = userInfo.clientPrincipal.claims;
+    if (claims) {
+      const givenName = claims.find(c => c.typ === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname')?.val;
+      const surname = claims.find(c => c.typ === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname')?.val;
+
+      if (givenName && surname) {
+        return `${givenName} ${surname}`;
+      }
+
+      const displayName = claims.find(c => c.typ === 'http://schemas.microsoft.com/identity/claims/displayname')?.val;
+      if (displayName) return displayName;
+    }
+
+    const userDetails = userInfo.clientPrincipal.userDetails;
+    if (userDetails && userDetails.includes('@')) {
+      const namePart = userDetails.split('@')[0];
+      return namePart.split('.').map(part =>
+        part.charAt(0).toUpperCase() + part.slice(1)
+      ).join(' ');
+    }
+
+    return userDetails || 'User';
+  };
+
+  const getUserEmail = () => {
+    if (!userInfo?.clientPrincipal) return '';
+
+    const claims = userInfo.clientPrincipal.claims;
+    if (claims) {
+      const email = claims.find(c =>
+        c.typ === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress' ||
+        c.typ === 'email'
+      )?.val;
+      if (email) return email;
+    }
+
+    const userDetails = userInfo.clientPrincipal.userDetails;
+    if (userDetails && userDetails.includes('@')) {
+      return userDetails;
+    }
+
+    return '';
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-uva-orange mx-auto mb-6"></div>
+          <p className="text-xl text-uva-navy">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userInfo?.clientPrincipal) {
+    // Redirect to login if not authenticated
+    if (typeof window !== 'undefined') {
+      window.location.href = '/.auth/login/aad';
+    }
+    return null;
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="min-h-screen flex flex-col relative">
+      {/* Background Image */}
+      <div
+        className="fixed inset-0 -z-10"
+        style={{
+          backgroundImage: 'url(/garrett-hall-sunset.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+          filter: 'grayscale(100%)',
+        }}
+      ></div>
+      {/* Background Overlay */}
+      <div className="fixed inset-0 bg-white/85 -z-10"></div>
+
+      <Header userName={getUserName()} />
+
+      <main className="flex-1 max-w-7xl w-full mx-auto px-8 py-12">
+        <AuditForm
+          userName={getUserName()}
+          userEmail={getUserEmail()}
+          userId={userInfo.clientPrincipal.userId}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

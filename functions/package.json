@@ -1,0 +1,20 @@
+{
+  "name": "audit-reminders-function",
+  "version": "1.0.0",
+  "description": "Azure Functions for audit form reminders",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "prestart": "npm run build",
+    "start": "func start"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.5.0",
+    "@sendgrid/mail": "^8.1.0",
+    "mssql": "^11.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
