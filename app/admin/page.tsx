@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { UserInfo, AuditResponse } from "@/types/audit";
+import { AuditResponse } from "@/types/audit";
 import { areas } from "@/data/questions";
 
 interface ResponseStats {
@@ -14,89 +14,19 @@ interface ResponseStats {
 }
 
 export default function AdminPage() {
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const [loading, setLoading] = useState(true);
   const [responses, setResponses] = useState<AuditResponse[]>([]);
   const [selectedArea, setSelectedArea] = useState<string>('all');
   const [selectedMonth, setSelectedMonth] = useState<string>('current');
 
   useEffect(() => {
-    // Check if we're in dev mode (local development)
-    const isDev = process.env.NODE_ENV === 'development';
-
-    if (isDev) {
-      // Mock user data for local development
-      const mockUser = {
-        clientPrincipal: {
-          identityProvider: 'aad',
-          userId: 'admin-user-123',
-          userDetails: 'admin.user@virginia.edu',
-          userRoles: ['authenticated', 'admin'],
-          claims: [
-            { typ: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname', val: 'Admin' },
-            { typ: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname', val: 'User' }
-          ]
-        }
-      };
-      setUserInfo(mockUser);
-
-      // Load mock responses from localStorage for demo
-      const storedResponses = localStorage.getItem('auditResponses');
-      if (storedResponses) {
-        setResponses(JSON.parse(storedResponses));
-      }
-
-      setLoading(false);
-      return;
+    // Load responses from localStorage
+    const storedResponses = localStorage.getItem('auditResponses');
+    if (storedResponses) {
+      setResponses(JSON.parse(storedResponses));
     }
-
-    // Fetch user info from Azure Easy Auth (production only)
-    fetch('/.auth/me')
-      .then(res => res.json())
-      .then(data => {
-        setUserInfo(data);
-
-        if (!data.clientPrincipal) {
-          window.location.href = '/.auth/login/aad';
-        } else {
-          // Fetch responses
-          fetchResponses();
-        }
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error fetching user info:', err);
-        setLoading(false);
-      });
   }, []);
 
-  const fetchResponses = async () => {
-    try {
-      const response = await fetch('/api/admin/responses');
-      if (response.ok) {
-        const data = await response.json();
-        setResponses(data.responses || []);
-      }
-    } catch (error) {
-      console.error('Error fetching responses:', error);
-    }
-  };
-
-  const getUserName = () => {
-    if (!userInfo?.clientPrincipal) return 'Admin';
-
-    const claims = userInfo.clientPrincipal.claims;
-    if (claims) {
-      const givenName = claims.find(c => c.typ === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname')?.val;
-      const surname = claims.find(c => c.typ === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname')?.val;
-
-      if (givenName && surname) {
-        return `${givenName} ${surname}`;
-      }
-    }
-
-    return userInfo.clientPrincipal.userDetails || 'Admin';
-  };
+  const getUserName = () => 'Admin User';
 
   const getStats = (): ResponseStats => {
     const currentMonth = new Date().toISOString().slice(0, 7);
@@ -161,17 +91,6 @@ export default function AdminPage() {
     a.download = `audit-responses-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-uva-orange mx-auto mb-6"></div>
-          <p className="text-xl text-uva-navy">Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
   const stats = getStats();
   const filteredResponses = getFilteredResponses();
