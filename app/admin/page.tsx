@@ -112,7 +112,21 @@ export default function AdminPage() {
   // Show password form if not authenticated
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-uva-navy to-uva-blue-light">
+      <div className="min-h-screen flex items-center justify-center relative">
+        {/* Background Image */}
+        <div
+          className="fixed inset-0 -z-10"
+          style={{
+            backgroundImage: 'url(/garrett-hall-sunset.jpg)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundAttachment: 'fixed',
+            filter: 'grayscale(100%)',
+          }}
+        ></div>
+        {/* Background Overlay */}
+        <div className="fixed inset-0 bg-white/85 -z-10"></div>
+
         <div className="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-serif font-bold text-uva-navy mb-2">
