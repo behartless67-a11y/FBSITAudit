@@ -15,6 +15,7 @@ export function AuditForm({ userName, userEmail, userId }: AuditFormProps) {
   const [responses, setResponses] = useState<Record<number, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [customName, setCustomName] = useState('');
 
   const handleAreaChange = (areaId: string) => {
     const area = areas.find(a => a.id === areaId);
@@ -31,7 +32,7 @@ export function AuditForm({ userName, userEmail, userId }: AuditFormProps) {
   };
 
   const isFormComplete = () => {
-    if (!selectedArea) return false;
+    if (!selectedArea || !customName.trim()) return false;
     const requiredQuestions = selectedArea.questions.filter(q => q.required);
     return requiredQuestions.every(q => responses[q.id]);
   };
@@ -57,7 +58,7 @@ export function AuditForm({ userName, userEmail, userId }: AuditFormProps) {
         },
         body: JSON.stringify({
           userId,
-          userName,
+          userName: customName.trim(),
           userEmail,
           areaId: selectedArea.id,
           areaName: selectedArea.name,
@@ -77,7 +78,7 @@ export function AuditForm({ userName, userEmail, userId }: AuditFormProps) {
         const auditResponse = {
           id: data.id,
           userId,
-          userName,
+          userName: customName.trim(),
           userEmail,
           areaId: selectedArea.id,
           areaName: selectedArea.name,
@@ -101,6 +102,7 @@ export function AuditForm({ userName, userEmail, userId }: AuditFormProps) {
       setTimeout(() => {
         setSelectedArea(null);
         setResponses({});
+        setCustomName('');
         setSubmitMessage(null);
       }, 3000);
 
@@ -130,6 +132,22 @@ export function AuditForm({ userName, userEmail, userId }: AuditFormProps) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Name Input */}
+          <div>
+            <label htmlFor="name" className="block text-lg font-semibold text-uva-navy mb-3">
+              Your Name <span className="text-uva-orange">*</span>
+            </label>
+            <input
+              type="text"
+              id="name"
+              value={customName}
+              onChange={(e) => setCustomName(e.target.value)}
+              placeholder="Enter your full name"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-uva-orange focus:outline-none transition-colors text-gray-700"
+              required
+            />
+          </div>
+
           {/* Area Selection */}
           <div>
             <label htmlFor="area" className="block text-lg font-semibold text-uva-navy mb-3">
