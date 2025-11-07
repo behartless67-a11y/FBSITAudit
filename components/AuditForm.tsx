@@ -73,26 +73,6 @@ export function AuditForm({ userName, userEmail, userId }: AuditFormProps) {
 
       const data = await response.json();
 
-      // For development: Save to localStorage for admin dashboard
-      if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-        const auditResponse = {
-          id: data.id,
-          userId,
-          userName: customName.trim(),
-          userEmail,
-          areaId: selectedArea.id,
-          areaName: selectedArea.name,
-          responses,
-          submittedAt: new Date().toISOString(),
-          month: currentMonth,
-        };
-
-        const existingResponses = localStorage.getItem('auditResponses');
-        const responsesArray = existingResponses ? JSON.parse(existingResponses) : [];
-        responsesArray.push(auditResponse);
-        localStorage.setItem('auditResponses', JSON.stringify(responsesArray));
-      }
-
       setSubmitMessage({
         type: 'success',
         text: 'Audit form submitted successfully! Thank you for completing the monthly audit.'

@@ -22,14 +22,29 @@ export default function AdminPage() {
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load responses from localStorage
-    const storedResponses = localStorage.getItem('auditResponses');
-    if (storedResponses) {
-      setResponses(JSON.parse(storedResponses));
+    if (isAuthenticated) {
+      fetchResponses();
     }
-  }, []);
+  }, [isAuthenticated]);
+
+  const fetchResponses = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/admin/responses');
+      const data = await response.json();
+
+      if (data.success) {
+        setResponses(data.responses);
+      }
+    } catch (error) {
+      console.error('Error fetching responses:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
