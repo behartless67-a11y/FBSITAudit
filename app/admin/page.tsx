@@ -17,13 +17,28 @@ export default function AdminPage() {
   const [responses, setResponses] = useState<AuditResponse[]>([]);
   const [selectedArea, setSelectedArea] = useState<string>('all');
   const [selectedMonth, setSelectedMonth] = useState<string>('current');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Check authentication
+    const cookies = document.cookie.split(';');
+    const authCookie = cookies.find(c => c.trim().startsWith('audit_auth='));
+
+    if (!authCookie || !authCookie.includes('authenticated')) {
+      window.location.href = '/login';
+      return;
+    }
+
+    setIsAuthenticated(true);
+
     // Load responses from localStorage
     const storedResponses = localStorage.getItem('auditResponses');
     if (storedResponses) {
       setResponses(JSON.parse(storedResponses));
     }
+
+    setLoading(false);
   }, []);
 
   const getUserName = () => 'Admin User';
@@ -91,6 +106,21 @@ export default function AdminPage() {
     a.download = `audit-responses-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-uva-orange mx-auto mb-6"></div>
+          <p className="text-xl text-uva-navy">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const stats = getStats();
   const filteredResponses = getFilteredResponses();
