@@ -138,13 +138,81 @@ export const areas: Area[] = [
     id: 'school-systems',
     name: 'School Systems',
     questions: [
-      // Placeholder - you mentioned you'll provide these later
       {
         id: 1,
-        text: 'School Systems questions will be provided',
+        section: 'User Access Review',
+        text: 'Has a review of all Faculty and Staff users been reviewed for appropriate permissions within Slate?',
         type: 'single-choice',
         required: true,
-        options: ['Yes', 'No']
+        options: ['Yes', 'Still working on an issue']
+      },
+      {
+        id: 2,
+        text: 'Have all accounts been deactivated for departing Faculty/Staff at Batten using the Batten IT guidelines and best practices?',
+        type: 'single-choice',
+        required: true,
+        options: ['Yes', 'Still working on an issue']
+      },
+      {
+        id: 3,
+        text: 'Have all new accounts been created for new Faculty/Staff at Batten using the Batten IT guidelines and best practices?',
+        type: 'single-choice',
+        required: true,
+        options: ['Yes', 'Still working on an issue']
+      },
+      {
+        id: 4,
+        text: 'Have all Slate user role assignments been verified to align with current job responsibilities and the principle of least privilege?',
+        type: 'single-choice',
+        required: true,
+        options: ['Yes', 'Still working on an issue']
+      },
+      {
+        id: 5,
+        text: 'Have any shared or generic Slate accounts been identified and reviewed for necessity and appropriate access controls?',
+        type: 'single-choice',
+        required: true,
+        options: ['Yes', 'Still working on an issue']
+      },
+      {
+        id: 6,
+        section: 'Account Reconciliation',
+        text: 'Has a reconciliation been completed between active Slate users and the current HR roster to identify orphaned or unused accounts?',
+        type: 'single-choice',
+        required: true,
+        options: ['Yes', 'Still working on an issue']
+      },
+      {
+        id: 7,
+        section: 'Integration & Service Accounts',
+        text: 'Have all Slate integration accounts (service accounts, API connections) been reviewed for security and appropriate credential management?',
+        type: 'single-choice',
+        required: true,
+        options: ['Yes', 'Still working on an issue']
+      },
+      {
+        id: 8,
+        section: 'Documentation',
+        text: 'Has documentation been reviewed and updated for Slate access request and approval workflows?',
+        type: 'single-choice',
+        required: true,
+        options: ['Yes', 'Still working on an issue']
+      },
+      {
+        id: 9,
+        section: 'Elevated Privileges',
+        text: 'Have all users with elevated privileges (admin roles, query access, application management) in Slate been reviewed and certified as appropriate?',
+        type: 'single-choice',
+        required: true,
+        options: ['Yes', 'Still working on an issue']
+      },
+      {
+        id: 10,
+        section: 'Audit & Monitoring',
+        text: 'Has audit logging been reviewed in Slate for any unusual access patterns, data exports, or unauthorized configuration changes?',
+        type: 'single-choice',
+        required: true,
+        options: ['Yes', 'Still working on an issue']
       }
     ]
   }

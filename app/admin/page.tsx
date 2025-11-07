@@ -194,7 +194,7 @@ export default function AdminPage() {
       {/* Background Overlay */}
       <div className="fixed inset-0 bg-white/85 -z-10"></div>
 
-      <Header userName={getUserName()} />
+      <Header userName={getUserName()} showFormLink={true} />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-8 py-12">
         {/* Header */}
