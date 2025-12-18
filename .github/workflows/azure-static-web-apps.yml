@@ -36,10 +36,6 @@ jobs:
         working-directory: api
         run: npm ci
 
-      - name: Build API
-        working-directory: api
-        run: npm run build
-
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
         with:
@@ -47,9 +43,9 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
           app_location: "out"
-          api_location: "api/dist"
+          api_location: "api"
           skip_app_build: true
-          skip_api_build: true
+          skip_api_build: false
         env:
           AZURE_SQL_SERVER: ${{ secrets.AZURE_SQL_SERVER }}
           AZURE_SQL_DATABASE: ${{ secrets.AZURE_SQL_DATABASE }}
