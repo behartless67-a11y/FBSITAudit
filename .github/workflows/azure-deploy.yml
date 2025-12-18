@@ -43,8 +43,20 @@ jobs:
 
       - name: Deploy to Azure via Kudu Zip Deploy
         run: |
-          curl -X POST \
+          echo "Deploying $(ls -lh deploy.zip | awk '{print $5}') zip file..."
+          HTTP_STATUS=$(curl -X POST \
             -u "${{ secrets.AZURE_DEPLOY_USER }}:${{ secrets.AZURE_DEPLOY_PASSWORD }}" \
             --data-binary @deploy.zip \
-            "https://${{ env.AZURE_WEBAPP_NAME }}.scm.azurewebsites.net/api/zipdeploy?isAsync=false" \
-            -H "Content-Type: application/zip"
+            "https://${{ env.AZURE_WEBAPP_NAME }}.scm.azurewebsites.net/api/zipdeploy" \
+            -H "Content-Type: application/zip" \
+            --max-time 600 \
+            -w "%{http_code}" \
+            -o /tmp/deploy_response.txt \
+            -s)
+          echo "Response status: $HTTP_STATUS"
+          cat /tmp/deploy_response.txt || true
+          if [ "$HTTP_STATUS" != "200" ] && [ "$HTTP_STATUS" != "202" ]; then
+            echo "Deployment failed with status $HTTP_STATUS"
+            exit 1
+          fi
+          echo "Deployment successful!"
