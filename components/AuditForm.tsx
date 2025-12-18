@@ -31,6 +31,18 @@ export function AuditForm({ userName, userEmail, userId }: AuditFormProps) {
     }));
   };
 
+  const handleAnswerYesForAll = () => {
+    if (!selectedArea) return;
+    const newResponses: Record<number, string> = {};
+    selectedArea.questions.forEach(question => {
+      // Only set "Yes" if it's an available option
+      if (question.options.includes('Yes')) {
+        newResponses[question.id] = 'Yes';
+      }
+    });
+    setResponses(newResponses);
+  };
+
   const isFormComplete = () => {
     if (!selectedArea || !customName.trim()) return false;
     const requiredQuestions = selectedArea.questions.filter(q => q.required);
@@ -152,6 +164,20 @@ export function AuditForm({ userName, userEmail, userId }: AuditFormProps) {
           {/* Questions */}
           {selectedArea && (
             <div className="space-y-8 mt-8 animate-fade-in-up">
+              {/* Answer Yes for All Button */}
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={handleAnswerYesForAll}
+                  className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors shadow-md flex items-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Answer "Yes" for All Questions
+                </button>
+              </div>
+
               <div className="border-t-2 border-gray-200 pt-6">
                 {selectedArea.questions.map((question, index) => {
                   const showSection = question.section && question.section !== currentSection;
