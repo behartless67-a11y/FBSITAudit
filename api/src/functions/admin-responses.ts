@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { getPool } from '@/lib/azure-sql';
+import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
+import { getPool } from '../shared/db';
 
 interface AuditResponse {
   id: string;
@@ -13,16 +13,14 @@ interface AuditResponse {
   submitted_at: Date;
 }
 
-export async function GET() {
+export async function adminResponses(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
   try {
     const pool = await getPool();
 
-    // Fetch all responses ordered by submission date (newest first)
     const result = await pool.request().query(`
       SELECT * FROM audit_responses ORDER BY submitted_at DESC
     `);
 
-    // Transform snake_case to camelCase for frontend
     const responses = result.recordset.map((row: AuditResponse) => ({
       id: row.id,
       userId: row.user_id,
@@ -35,15 +33,24 @@ export async function GET() {
       submittedAt: row.submitted_at,
     }));
 
-    return NextResponse.json({
-      success: true,
-      responses,
-    });
+    return {
+      jsonBody: {
+        success: true,
+        responses,
+      }
+    };
   } catch (error) {
-    console.error('Error fetching responses:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    context.error('Error fetching responses:', error);
+    return {
+      status: 500,
+      jsonBody: { error: 'Internal server error' }
+    };
   }
 }
+
+app.http('admin-responses', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'admin/responses',
+  handler: adminResponses
+});
