@@ -41,10 +41,32 @@ jobs:
           cp -r .next/static .next/standalone/.next/
           cd .next/standalone && zip -r ../../deploy.zip .
 
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: deploy.zip
-          type: zip
+      - name: Extract credentials and deploy
+        env:
+          PUBLISH_PROFILE: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        run: |
+          # Extract username and password from publish profile XML
+          USERNAME=$(echo "$PUBLISH_PROFILE" | grep -oP 'userName="\K[^"]+' | head -1)
+          PASSWORD=$(echo "$PUBLISH_PROFILE" | grep -oP 'userPWD="\K[^"]+' | head -1)
+
+          echo "Deploying $(ls -lh deploy.zip | awk '{print $5}') zip file to Azure..."
+
+          # Use OneDeploy API
+          HTTP_STATUS=$(curl -X POST \
+            -u "$USERNAME:$PASSWORD" \
+            --data-binary @deploy.zip \
+            "https://${{ env.AZURE_WEBAPP_NAME }}.scm.azurewebsites.net/api/zipdeploy" \
+            -H "Content-Type: application/zip" \
+            --max-time 600 \
+            -w "%{http_code}" \
+            -o /tmp/deploy_response.txt \
+            -s)
+
+          echo "Response status: $HTTP_STATUS"
+          cat /tmp/deploy_response.txt 2>/dev/null || true
+
+          if [ "$HTTP_STATUS" != "200" ] && [ "$HTTP_STATUS" != "202" ]; then
+            echo "Deployment failed with status $HTTP_STATUS"
+            exit 1
+          fi
+          echo "Deployment successful!"
