@@ -41,22 +41,10 @@ jobs:
           cp -r .next/static .next/standalone/.next/
           cd .next/standalone && zip -r ../../deploy.zip .
 
-      - name: Deploy to Azure via Kudu Zip Deploy
-        run: |
-          echo "Deploying $(ls -lh deploy.zip | awk '{print $5}') zip file..."
-          HTTP_STATUS=$(curl -X POST \
-            -u "${{ secrets.AZURE_DEPLOY_USER }}:${{ secrets.AZURE_DEPLOY_PASSWORD }}" \
-            --data-binary @deploy.zip \
-            "https://${{ env.AZURE_WEBAPP_NAME }}.scm.azurewebsites.net/api/zipdeploy" \
-            -H "Content-Type: application/zip" \
-            --max-time 600 \
-            -w "%{http_code}" \
-            -o /tmp/deploy_response.txt \
-            -s)
-          echo "Response status: $HTTP_STATUS"
-          cat /tmp/deploy_response.txt || true
-          if [ "$HTTP_STATUS" != "200" ] && [ "$HTTP_STATUS" != "202" ]; then
-            echo "Deployment failed with status $HTTP_STATUS"
-            exit 1
-          fi
-          echo "Deployment successful!"
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: deploy.zip
+          type: zip
