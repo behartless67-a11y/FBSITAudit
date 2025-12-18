@@ -1,33 +1,36 @@
 import { NextResponse } from 'next/server';
-import { getServiceSupabase } from '@/lib/supabase';
+import { getPool } from '@/lib/azure-sql';
 
-export async function GET(request: Request) {
+interface AuditResponse {
+  id: string;
+  user_id: string;
+  user_name: string;
+  user_email: string;
+  area_id: string;
+  area_name: string;
+  responses: string;
+  month: string;
+  submitted_at: Date;
+}
+
+export async function GET() {
   try {
-    const supabase = getServiceSupabase();
+    const pool = await getPool();
 
     // Fetch all responses ordered by submission date (newest first)
-    const { data, error } = await supabase
-      .from('audit_responses')
-      .select('*')
-      .order('submitted_at', { ascending: false });
-
-    if (error) {
-      console.error('Database error:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch audit responses' },
-        { status: 500 }
-      );
-    }
+    const result = await pool.request().query(`
+      SELECT * FROM audit_responses ORDER BY submitted_at DESC
+    `);
 
     // Transform snake_case to camelCase for frontend
-    const responses = data.map((row) => ({
+    const responses = result.recordset.map((row: AuditResponse) => ({
       id: row.id,
       userId: row.user_id,
       userName: row.user_name,
       userEmail: row.user_email,
       areaId: row.area_id,
       areaName: row.area_name,
-      responses: row.responses,
+      responses: typeof row.responses === 'string' ? JSON.parse(row.responses) : row.responses,
       month: row.month,
       submittedAt: row.submitted_at,
     }));

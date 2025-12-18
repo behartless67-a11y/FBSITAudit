@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/monthly-reminders?type=first",
+      "schedule": "0 9 1 * *"
+    },
+    {
+      "path": "/api/cron/monthly-reminders?type=mid_month",
+      "schedule": "0 9 15 * *"
+    },
+    {
+      "path": "/api/cron/monthly-reminders?type=final",
+      "schedule": "0 9 25 * *"
+    }
+  ]
+}

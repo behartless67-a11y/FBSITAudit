@@ -5,22 +5,36 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AuditForm } from "@/components/AuditForm";
 
-const CORRECT_PASSWORD = "GarrettHall235!";
-
 export default function Home() {
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError('');
 
-    if (password === CORRECT_PASSWORD) {
-      setIsAuthenticated(true);
-      setError('');
-    } else {
-      setError('Incorrect password. Please try again.');
-      setPassword('');
+    try {
+      const response = await fetch('/api/auth/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setIsAuthenticated(true);
+      } else {
+        setError('Incorrect password. Please try again.');
+        setPassword('');
+      }
+    } catch (err) {
+      setError('Authentication failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -68,6 +82,7 @@ export default function Home() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-uva-orange focus:border-transparent"
                 placeholder="Enter password"
                 autoFocus
+                disabled={isLoading}
               />
             </div>
 
@@ -79,9 +94,10 @@ export default function Home() {
 
             <button
               type="submit"
-              className="w-full bg-uva-orange hover:bg-uva-orange-light text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
+              disabled={isLoading}
+              className="w-full bg-uva-orange hover:bg-uva-orange-light text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 disabled:opacity-50"
             >
-              Login
+              {isLoading ? 'Logging in...' : 'Login'}
             </button>
           </form>
 

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getServiceSupabase } from '@/lib/supabase';
+import { getPool } from '@/lib/azure-sql';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: Request) {
   try {
@@ -14,28 +15,25 @@ export async function POST(request: Request) {
       );
     }
 
-    const supabase = getServiceSupabase();
+    const pool = await getPool();
+    const id = uuidv4();
 
-    // Insert into database
-    const { data, error } = await supabase
-      .from('audit_responses')
-      .insert([
-        {
-          user_id: userId || 'anonymous',
-          user_name: userName,
-          user_email: userEmail || '',
-          area_id: areaId,
-          area_name: areaName,
-          responses: responses,
-          month: month,
-          submitted_at: new Date().toISOString(),
-        },
-      ])
-      .select()
-      .single();
+    // Insert into database using parameterized query
+    const result = await pool.request()
+      .input('id', id)
+      .input('user_id', userId || 'anonymous')
+      .input('user_name', userName)
+      .input('user_email', userEmail || '')
+      .input('area_id', areaId)
+      .input('area_name', areaName)
+      .input('responses', JSON.stringify(responses))
+      .input('month', month)
+      .query(`
+        INSERT INTO audit_responses (id, user_id, user_name, user_email, area_id, area_name, responses, month)
+        VALUES (@id, @user_id, @user_name, @user_email, @area_id, @area_name, @responses, @month)
+      `);
 
-    if (error) {
-      console.error('Database error:', error);
+    if (result.rowsAffected[0] === 0) {
       return NextResponse.json(
         { error: 'Failed to save audit response' },
         { status: 500 }
@@ -44,11 +42,18 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      id: data.id,
+      id: id,
       message: 'Audit response submitted successfully',
     });
   } catch (error) {
     console.error('Error submitting audit:', error);
+    // Check for unique constraint violation
+    if (error instanceof Error && error.message.includes('UQ_user_area_month')) {
+      return NextResponse.json(
+        { error: 'You have already submitted an audit for this area this month' },
+        { status: 409 }
+      );
+    }
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -13,8 +13,6 @@ interface ResponseStats {
   recentResponses: AuditResponse[];
 }
 
-const CORRECT_PASSWORD = "GarrettHall235!";
-
 export default function AdminPage() {
   const [responses, setResponses] = useState<AuditResponse[]>([]);
   const [selectedArea, setSelectedArea] = useState<string>('all');
@@ -23,6 +21,7 @@ export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -46,15 +45,30 @@ export default function AdminPage() {
     }
   };
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoggingIn(true);
+    setError('');
 
-    if (password === CORRECT_PASSWORD) {
-      setIsAuthenticated(true);
-      setError('');
-    } else {
-      setError('Incorrect password. Please try again.');
-      setPassword('');
+    try {
+      const response = await fetch('/api/auth/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setIsAuthenticated(true);
+      } else {
+        setError('Incorrect password. Please try again.');
+        setPassword('');
+      }
+    } catch (err) {
+      setError('Authentication failed. Please try again.');
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -163,6 +177,7 @@ export default function AdminPage() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-uva-orange focus:border-transparent"
                 placeholder="Enter password"
                 autoFocus
+                disabled={isLoggingIn}
               />
             </div>
 
@@ -174,9 +189,10 @@ export default function AdminPage() {
 
             <button
               type="submit"
-              className="w-full bg-uva-orange hover:bg-uva-orange-light text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
+              disabled={isLoggingIn}
+              className="w-full bg-uva-orange hover:bg-uva-orange-light text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 disabled:opacity-50"
             >
-              Login
+              {isLoggingIn ? 'Logging in...' : 'Login'}
             </button>
           </form>
 
