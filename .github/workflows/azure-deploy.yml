@@ -45,9 +45,18 @@ jobs:
         env:
           PUBLISH_PROFILE: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         run: |
-          # Extract username and password from publish profile XML
-          USERNAME=$(echo "$PUBLISH_PROFILE" | grep -oP 'userName="\K[^"]+' | head -1)
-          PASSWORD=$(echo "$PUBLISH_PROFILE" | grep -oP 'userPWD="\K[^"]+' | head -1)
+          # Extract username and password from publish profile XML using sed (more compatible)
+          USERNAME=$(echo "$PUBLISH_PROFILE" | sed -n 's/.*userName="\([^"]*\)".*/\1/p' | head -1)
+          PASSWORD=$(echo "$PUBLISH_PROFILE" | sed -n 's/.*userPWD="\([^"]*\)".*/\1/p' | head -1)
+
+          echo "Username extracted: ${#USERNAME} characters"
+          echo "Password extracted: ${#PASSWORD} characters"
+
+          if [ -z "$USERNAME" ] || [ -z "$PASSWORD" ]; then
+            echo "Failed to extract credentials from publish profile"
+            echo "Profile length: ${#PUBLISH_PROFILE}"
+            exit 1
+          fi
 
           echo "Deploying $(ls -lh deploy.zip | awk '{print $5}') zip file to Azure..."
 
