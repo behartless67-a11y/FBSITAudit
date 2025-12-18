@@ -35,14 +35,16 @@ jobs:
           AZURE_SQL_USER: ${{ secrets.AZURE_SQL_USER }}
           AZURE_SQL_PASSWORD: ${{ secrets.AZURE_SQL_PASSWORD }}
 
-      - name: Copy static files to standalone
+      - name: Prepare standalone package
         run: |
           cp -r public .next/standalone/
           cp -r .next/static .next/standalone/.next/
+          cd .next/standalone && zip -r ../../deploy.zip .
 
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: .next/standalone
+      - name: Deploy to Azure via Kudu Zip Deploy
+        run: |
+          curl -X POST \
+            -u "${{ secrets.AZURE_DEPLOY_USER }}:${{ secrets.AZURE_DEPLOY_PASSWORD }}" \
+            --data-binary @deploy.zip \
+            "https://${{ env.AZURE_WEBAPP_NAME }}.scm.azurewebsites.net/api/zipdeploy?isAsync=false" \
+            -H "Content-Type: application/zip"
