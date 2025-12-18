@@ -45,16 +45,18 @@ jobs:
         env:
           PUBLISH_PROFILE: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         run: |
-          # Extract username and password from publish profile XML using sed (more compatible)
-          USERNAME=$(echo "$PUBLISH_PROFILE" | sed -n 's/.*userName="\([^"]*\)".*/\1/p' | head -1)
-          PASSWORD=$(echo "$PUBLISH_PROFILE" | sed -n 's/.*userPWD="\([^"]*\)".*/\1/p' | head -1)
+          # Extract username and password from publish profile XML
+          # The profile is single-line XML, so we need to handle that
+          USERNAME=$(echo "$PUBLISH_PROFILE" | tr '>' '\n' | grep -m1 'publishMethod="MSDeploy"' | sed 's/.*userName="\([^"]*\)".*/\1/')
+          PASSWORD=$(echo "$PUBLISH_PROFILE" | tr '>' '\n' | grep -m1 'publishMethod="MSDeploy"' | sed 's/.*userPWD="\([^"]*\)".*/\1/')
 
-          echo "Username extracted: ${#USERNAME} characters"
+          echo "Username extracted: ${#USERNAME} characters (starts with: ${USERNAME:0:3}...)"
           echo "Password extracted: ${#PASSWORD} characters"
 
-          if [ -z "$USERNAME" ] || [ -z "$PASSWORD" ]; then
+          if [ -z "$USERNAME" ] || [ ${#USERNAME} -lt 10 ]; then
             echo "Failed to extract credentials from publish profile"
             echo "Profile length: ${#PUBLISH_PROFILE}"
+            echo "First 200 chars: ${PUBLISH_PROFILE:0:200}"
             exit 1
           fi
 
