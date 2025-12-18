@@ -1,215 +1,182 @@
-# Monthly Audit Form - Batten School
+# FBS IT Audit - Monthly Audit Form
 
-A modern web application for managing monthly IT audit questionnaires for the Frank Batten School of Leadership and Public Policy.
+A web application for managing monthly IT audit questionnaires at the Frank Batten School of Leadership and Public Policy.
 
-## Features
+## Project Overview
 
-- **Area-based Questionnaires**: Dropdown selector for different IT areas (Desktop/Client/User, Data and Analytics, School Systems)
-- **Dynamic Question Loading**: Questions load based on selected area
-- **Azure AD Authentication**: Secure login via Azure Easy Auth
-- **Monthly Tracking**: Tracks submissions by month to prevent duplicates
-- **Email Reminders**: Automated reminders for incomplete audits
-- **Admin Dashboard**: View all responses and completion status
-- **Batten Brand Styling**: Matches the official Batten School design system
+This application enables FBS IT staff to:
+- Submit monthly audit questionnaires for different IT areas
+- Track submission status across teams and months
+- Receive automated email reminders for incomplete audits
+- View completion dashboards (admin)
 
-## Tech Stack
+**IT Areas Covered:**
+- Desktop/Client/User
+- Data and Analytics
+- School Systems
 
-### Frontend
-- **Next.js 15** with App Router
-- **React 19**
-- **TypeScript**
-- **Tailwind CSS**
-- **Libre Baskerville & Inter** fonts
+## Prerequisites
 
-### Backend
-- **Azure Static Web Apps** for hosting
-- **Azure Functions** for API endpoints
-- **Azure AD** for authentication
-- **Azure SQL Database** or **AWS RDS PostgreSQL** for data storage
-- **Azure Logic Apps** or **Azure Functions with Timer** for email reminders
+Before running this application, ensure you have:
 
-## Getting Started
+| Requirement | Version | Notes |
+|-------------|---------|-------|
+| Node.js | 20.9.0+ | LTS recommended |
+| npm | 10.0+ | Comes with Node.js |
+| Azure CLI | Latest | For deployment |
+| GitHub CLI | Latest | For repository management |
+| Azure Account | - | With active subscription |
 
-### Prerequisites
-- Node.js 18 or higher
-- npm or yarn
-- Azure account (for deployment)
-- Optional: AWS account (if using AWS RDS for database)
+## Installation
 
-### Local Development
+### 1. Clone the Repository
 
-1. Install dependencies:
+```bash
+git clone https://github.com/BattenIT/fbs-itaudit.git
+cd fbs-itaudit
+```
+
+### 2. Install Dependencies
+
 ```bash
 npm install
 ```
 
-2. Run the development server:
+### 3. Configure Environment
+
+Copy the example environment file:
+```bash
+cp .env.example .env.local
+```
+
+Edit `.env.local` with your configuration (see Environment Variables section).
+
+### 4. Run Development Server
+
 ```bash
 npm run dev
 ```
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-The app will run with mock authentication data in development mode.
+## Usage
 
-## Database Setup
+### For IT Staff
+1. Navigate to the application URL
+2. Sign in with your UVA Azure AD credentials
+3. Select your IT area from the dropdown
+4. Complete all required questions
+5. Submit the form
 
-### Option 1: Azure SQL Database
+### For Administrators
+1. Navigate to `/admin`
+2. View all submissions and completion status
+3. Export data as needed
 
-1. Create an Azure SQL Database in your Azure portal
-2. Run the SQL schema from `database/schema.sql` (use the SQL Server version)
-3. Configure connection string in your Azure Function App settings
+## Tech Stack
 
-### Option 2: AWS RDS PostgreSQL
+| Layer | Technology | Version |
+|-------|------------|---------|
+| Framework | Next.js | 16.x |
+| UI Library | React | 19.x |
+| Language | TypeScript | 5.x |
+| Styling | Tailwind CSS | 4.x |
+| Hosting | Azure Static Web Apps | - |
+| Database | Azure SQL Database | - |
+| Auth | Azure AD | - |
+| Functions | Azure Functions | v4 |
 
-1. Create an RDS PostgreSQL instance in AWS
-2. Run the PostgreSQL schema from `database/schema.sql` (use the PostgreSQL version)
-3. Configure connection string in your Azure Function App settings
-
-### Database Tables
-
-- **audit_responses**: Stores all form submissions
-- **email_reminders**: Tracks which reminders have been sent
-- **user_area_assignments**: Maps users to their responsible areas
-- **v_monthly_completion_status**: View showing completion status
-
-## Deployment to Azure
-
-### Step 1: Create Azure Resources
-
-1. **Azure Static Web App**:
-```bash
-az staticwebapp create \
-  --name batten-audit-form \
-  --resource-group your-resource-group \
-  --location eastus2
-```
-
-2. **Azure SQL Database** (or skip if using AWS RDS):
-```bash
-az sql server create \
-  --name batten-audit-db-server \
-  --resource-group your-resource-group \
-  --location eastus2 \
-  --admin-user dbadmin \
-  --admin-password YourSecurePassword123!
-
-az sql db create \
-  --name batten-audit-db \
-  --server batten-audit-db-server \
-  --resource-group your-resource-group \
-  --service-objective S0
-```
-
-### Step 2: Configure Azure AD Authentication
-
-1. Go to your Static Web App in Azure Portal
-2. Navigate to "Authentication"
-3. Add "Azure Active Directory" as identity provider
-4. Configure allowed users/groups
-
-### Step 3: Deploy the Application
+## Environment Variables
 
 ```bash
-npm run build
+# Database
+DATABASE_CONNECTION_STRING=Server=tcp:fbs-itaudit-dev-dbserver.database.windows.net,1433;Database=fbs-itaudit-dev-db;...
 
-# Deploy using Azure Static Web Apps CLI
-npx @azure/static-web-apps-cli deploy \
-  --deployment-token <your-deployment-token> \
-  --app-location "." \
-  --output-location ".next"
+# Email (choose one)
+SENDGRID_API_KEY=your-sendgrid-key
+# OR
+SMTP_HOST=smtp.office365.com
+SMTP_PORT=587
+SMTP_USER=your-email@virginia.edu
+SMTP_PASSWORD=your-password
+
+# Application
+FROM_EMAIL=noreply@virginia.edu
+APP_URL=https://fbs-itaudit-dev-app.azurestaticapps.net
 ```
 
-Or use GitHub Actions (recommended):
-- Connect your repository to Azure Static Web Apps
-- It will auto-generate a deployment workflow
+## Deployment
 
-## Email Reminder System
+See [FBS_AZURE_DEPLOYMENT.md](FBS_AZURE_DEPLOYMENT.md) for complete FBS-compliant deployment instructions.
 
-### Option 1: Azure Logic Apps
+### Quick Deploy Summary
 
-1. Create a Logic App with a Recurrence trigger (runs monthly)
-2. Add action to query `v_monthly_completion_status` view
-3. Filter for status = 'Pending'
-4. Send email for each pending submission
+1. **Create Azure Resources** (following FBS naming standards)
+2. **Configure GitHub Actions** with deployment token
+3. **Set up Azure AD authentication**
+4. **Run database schema**
+5. **Push to main branch** to trigger deployment
 
-### Option 2: Azure Functions with Timer Trigger
+### FBS Resource Naming
 
-Create a timer-triggered function that:
-1. Runs daily during the reminder period
-2. Queries database for incomplete submissions
-3. Sends reminder emails via SendGrid or Azure Communication Services
-4. Tracks sent reminders in `email_reminders` table
+| Resource | Development | Production |
+|----------|-------------|------------|
+| Resource Group | `fbs-itaudit-dev-rg` | `fbs-itaudit-prod-rg` |
+| Static Web App | `fbs-itaudit-dev-app` | `fbs-itaudit-prod-app` |
+| SQL Database | `fbs-itaudit-dev-db` | `fbs-itaudit-prod-db` |
 
-Example schedule for 15th of month:
+## Project Structure
+
 ```
-0 0 9 15 * *  // 9 AM on the 15th of every month
+fbs-itaudit/
+├── app/                    # Next.js app router pages
+│   ├── admin/             # Admin dashboard
+│   ├── api/               # API routes
+│   └── page.tsx           # Main audit form
+├── components/            # React components
+├── data/                  # Question definitions
+├── database/              # SQL schema files
+├── functions/             # Azure Functions (email reminders)
+├── lib/                   # Utility functions
+├── public/                # Static assets
+├── types/                 # TypeScript definitions
+└── FBS_AZURE_DEPLOYMENT.md # Deployment guide
 ```
 
 ## Adding New Questions
 
-1. Edit `data/questions.ts`
-2. Add questions to the appropriate area's `questions` array
-3. Use sections to organize questions:
+Edit `data/questions.ts`:
 
 ```typescript
 {
   id: 11,
-  section: 'New Section Name',  // This creates a visual section break
-  text: 'Your question text?',
+  section: 'New Section',
+  text: 'Your question here?',
   type: 'single-choice',
   required: true,
-  options: ['Yes', 'No']
+  options: ['Yes', 'No', 'N/A']
 }
 ```
 
-## Adding New Areas
+## Security
 
-1. Edit `data/questions.ts`
-2. Add a new area object to the `areas` array:
+- Azure AD authentication required for all users
+- Role-based access control for admin features
+- SQL injection protection via parameterized queries
+- HTTPS enforced by Azure Static Web Apps
+- Secrets stored in Azure Key Vault / App Settings
 
-```typescript
-{
-  id: 'new-area-id',
-  name: 'New Area Name',
-  questions: [/* your questions */]
-}
-```
+## Contact
 
-## Environment Variables
+**FBS IT Team**
+- Email: Contact through UVA IT channels
+- GitHub: [@BattenIT](https://github.com/BattenIT)
 
-For production deployment, configure these in Azure:
-
-```
-DATABASE_CONNECTION_STRING=<your-database-connection-string>
-SENDGRID_API_KEY=<your-sendgrid-key> // if using SendGrid
-SMTP_HOST=<smtp-server>
-SMTP_PORT=587
-SMTP_USER=<smtp-username>
-SMTP_PASSWORD=<smtp-password>
-```
-
-## Admin Dashboard
-
-To create an admin dashboard to view responses:
-
-1. Create `/app/admin/page.tsx`
-2. Add an API route to fetch all responses
-3. Protect with role-based authentication (add "admin" to `allowedRoles` in `staticwebapp.config.json`)
-
-## Security Considerations
-
-- ✅ Azure AD authentication required
-- ✅ Role-based access control
-- ✅ API routes protected
-- ✅ Input validation on API endpoints
-- ✅ SQL injection protection (use parameterized queries)
-- ✅ HTTPS enforced by Azure Static Web Apps
-
-## Support
-
-For issues or questions, contact the Batten School IT team.
+For issues with this application:
+1. Check existing GitHub Issues
+2. Create a new issue with detailed description
+3. Contact FBS IT Team directly for urgent matters
 
 ## License
 
-© Frank Batten School of Leadership and Public Policy
+Internal use only - Frank Batten School of Leadership and Public Policy, University of Virginia.
